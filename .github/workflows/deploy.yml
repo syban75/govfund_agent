@@ -22,7 +22,7 @@ jobs:
           $sshConfig = "C:\Users\syban\.ssh\config"
 
           Write-Host "Checking SSH connection to H200..."
-          ssh -o BatchMode=yes -o ConnectTimeout=10 h200 "echo SSH_OK && whoami && hostname"
+          ssh -F $sshConfig -o BatchMode=yes -o ConnectTimeout=10 h200 "echo SSH_OK && whoami && hostname"
 
           if ($LASTEXITCODE -ne 0) {
             throw "SSH connection failed. Exit code: $LASTEXITCODE"
