@@ -24,7 +24,7 @@ jobs:
           Write-Host "Checking SSH connection to H200..."
 
           ssh `
-            -vvv ` 
+            -vvv `
             -F $sshConfig `
             -o "UserKnownHostsFile=$knownHosts" `
             -o StrictHostKeyChecking=yes `
@@ -40,7 +40,7 @@ jobs:
           Write-Host "Checking Docker on H200..."
 
           ssh `
-            -vvv ` 
+            -vvv `
             -F $sshConfig `
             -o "UserKnownHostsFile=$knownHosts" `
             -o StrictHostKeyChecking=yes `
