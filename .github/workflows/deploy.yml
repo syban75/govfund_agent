@@ -13,7 +13,7 @@ jobs:
   # -------------------------
 
   test:
-    runs-on: [self-hosted, Windows, X64, govfund]
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Check SSH
         shell: powershell
@@ -44,7 +44,7 @@ jobs:
   deploy:
 
     needs: test
-    runs-on: [self-hosted, Windows, X64, govfund]
+    runs-on: [self-hosted, Windows, X64]
     environment: production
 
     steps:
