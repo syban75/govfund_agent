@@ -19,9 +19,19 @@ jobs:
         shell: powershell
         run: |
           $sshConfig = "C:\actions-runner\.ssh\config"
+          $knownHosts = "C:\actions-runner\.ssh\known_hosts"
 
           Write-Host "Checking SSH connection to H200..."
-          ssh -F $sshConfig -o BatchMode=yes -o ConnectTimeout=10 h200 "echo SSH_OK && whoami && hostname"
+
+          ssh `
+            -vvv ` 
+            -F $sshConfig `
+            -o "UserKnownHostsFile=$knownHosts" `
+            -o StrictHostKeyChecking=yes `
+            -o BatchMode=yes `
+            -o ConnectTimeout=10 `
+            h200 "echo SSH_OK && whoami && hostname"
+
 
           if ($LASTEXITCODE -ne 0) {
             throw "SSH connection failed. Exit code: $LASTEXITCODE"
@@ -29,7 +39,14 @@ jobs:
 
           Write-Host "Checking Docker on H200..."
 
-          ssh -o BatchMode=yes  -o ConnectTimeout=10  h200 "docker ps"
+          ssh `
+            -vvv ` 
+            -F $sshConfig `
+            -o "UserKnownHostsFile=$knownHosts" `
+            -o StrictHostKeyChecking=yes `
+            -o BatchMode=yes `
+            -o ConnectTimeout=10 `
+          h200 "docker ps"
 
           if ($LASTEXITCODE -ne 0) {
             throw "Docker command failed. Exit code: $LASTEXITCODE"
