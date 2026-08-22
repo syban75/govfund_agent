@@ -14,33 +14,7 @@ jobs:
 
   test:
     runs-on: [self-hosted, Windows, X64, govfund]
-
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Check Python
-        run: python --version
-
-      - name: Run tests
-        run: |
-          if (Test-Path tests) {
-            python -m pytest
-          }
-
-
-  # -------------------------
-  # CD
-  # -------------------------
-
-  deploy:
-
-    needs: test
-    runs-on: [self-hosted, Windows, X64, govfund]
-    environment: production
-
-    steps:
-
       - name: Check SSH
         shell: powershell
         run: |
@@ -62,6 +36,18 @@ jobs:
 
           Write-Host "SSH and Docker checks completed successfully."
 
+
+  # -------------------------
+  # CD
+  # -------------------------
+
+  deploy:
+
+    needs: test
+    runs-on: [self-hosted, Windows, X64, govfund]
+    environment: production
+
+    steps:
       - name: Deploy
         shell: powershell
         run: |
