@@ -19,6 +19,8 @@ jobs:
         shell: powershell
         run: |
 
+          $sshConfig = "C:\Users\syban\.ssh\config"
+
           Write-Host "Checking SSH connection to H200..."
           ssh -o BatchMode=yes -o ConnectTimeout=10 h200 "echo SSH_OK && whoami && hostname"
 
@@ -51,4 +53,7 @@ jobs:
       - name: Deploy
         shell: powershell
         run: |
+
+          $sshConfig = "C:\Users\syban\.ssh\config"
+
           Write-Host "Deploying govfund_agent..."
