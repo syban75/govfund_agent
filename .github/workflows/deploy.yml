@@ -1,0 +1,68 @@
+name: Deploy from Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+
+  # -------------------------
+  # 중계서버 
+  # -------------------------
+
+  test:
+    runs-on: [self-hosted, Windows, X64, govfund]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Check Python
+        run: python --version
+
+      - name: Run tests
+        run: |
+          if (Test-Path tests) {
+            python -m pytest
+          }
+
+
+  # -------------------------
+  # CD
+  # -------------------------
+
+  deploy:
+
+    needs: test
+    runs-on: [self-hosted, Windows, X64, govfund]
+    environment: production
+
+    steps:
+
+      - name: Check SSH
+        shell: powershell
+        run: |
+
+          Write-Host "Checking SSH connection to H200..."
+          ssh -o BatchMode=yes -o ConnectTimeout=10 h200 "echo SSH_OK && whoami && hostname"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "SSH connection failed. Exit code: $LASTEXITCODE"
+          }
+
+          Write-Host "Checking Docker on H200..."
+
+          ssh -o BatchMode=yes  -o ConnectTimeout=10  h200 "docker ps"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Docker command failed. Exit code: $LASTEXITCODE"
+          }
+
+          Write-Host "SSH and Docker checks completed successfully."
+
+      - name: Deploy
+        shell: powershell
+        run: |
+          Write-Host "Deploying govfund_agent..."
