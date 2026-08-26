@@ -6,4 +6,5 @@ id_ed25519*
 __pycache__
 *.pyc
 .venv
+chroma_govfund_db
 
