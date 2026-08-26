@@ -1,7 +1,6 @@
 """
-advanced_rag_agent.py
+govfund_agent.py
 --------------------------------
-기존 AdvancedRAG_All_Graph2.py 를 그대로 옮긴 Agent 모듈입니다.
 LangGraph 기반 Advanced RAG(질문 분석 / Multi-Query / HyDE / 검색 /
 Post-Processing / Reranking / Context Compression / 답변 생성)를
 그대로 유지하되, main.py(FastAPI)에서 import 해서 쓸 수 있도록
@@ -11,7 +10,7 @@ FastAPI의 `app = FastAPI()` 와 이름이 겹치지 않도록, 여기서는
 컴파일된 그래프 객체 이름을 `rag_graph` 로 둡니다.
 
 사전 준비:
-- AdvancedRAG_All_BuildDB.py 를 먼저 실행하여 chroma_travel_db 생성
+- govfund_BuildDB.py 를 먼저 실행하여 chroma_travel_db 생성
   (이 모듈은 DB를 다시 만들지 않고 검색만 수행합니다)
 - Ollama 로컬 서버 실행 (ollama serve) 및 모델 다운로드:
     ollama pull gemma4:e4b   (또는 사용할 LLM 모델)
@@ -40,12 +39,13 @@ except ImportError:  # langchain-chroma 미설치 환경 대비
     from langchain_community.vectorstores import Chroma
 
 # ---------------------------------------------------------------------------
-# 설정값 (AdvancedRAG_All_BuildDB.py 와 동일하게 맞춰야 합니다)
+# 설정값 (govfund_BuildDB.py 와 동일하게 맞춰야 합니다)
 # ---------------------------------------------------------------------------
-DB_DIR = "chroma_travel_db"
-COLLECTION_NAME = "travel_guide"
+
+DB_DIR = "../chroma_govfund_db"
+COLLECTION_NAME = "govfund_guide"
 EMBEDDING_MODEL = "bge-m3"        # 사용자 환경에 맞게 변경 (ollama pull bge-m3 필요)
-OLLAMA_MODEL = "gemma4:e4b"      # 사용자 환경에 맞게 변경
+OLLAMA_MODEL = "qwen2.5:14b" #"gemma4:e4b"      # 사용자 환경에 맞게 변경
 RERANK_MODEL_NAME = "Dongjin-kr/ko-reranker"
 
 TOP_K_PER_QUERY = 3          # Query 1개당 검색할 문서 수
@@ -54,11 +54,7 @@ RERANK_TOP_N = 5             # Reranking 이후 최종 유지 문서 수
 SCORE_THRESHOLD = 0.5        # relevance_score 최소 기준 (이 값 미만 제거)
 
 CATEGORY_MAP = {
-    "오사카_패키지.txt": "travel_product",
-    "제주도_호텔.txt": "hotel",
-    "항공권_이용안내.txt": "flight",
-    "일정변경_규정.txt": "schedule_change",
-    "취소특별약관.txt": "cancellation",
+    "(공고문)_2026년도_중앙부처_및_지자체_창업지원사업_통합공고문(제2025-648호,_2025.12.19.).pdf": "notice",
 }
 
 embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url="http://10.8.0.1:11434")
@@ -102,7 +98,6 @@ class AdvancedRAGState(TypedDict, total=False):
     logs: list[str]
     metrics: dict
 
-
 def new_state(question: str) -> AdvancedRAGState:
     return {
         "question": question,
@@ -122,6 +117,7 @@ def new_state(question: str) -> AdvancedRAGState:
     }
 
 
+
 # ---------------------------------------------------------------------------
 # 노드 1. analyze_query_node : 질문 분석 및 전략/카테고리 판단
 # ---------------------------------------------------------------------------
@@ -129,17 +125,17 @@ ANALYZE_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "당신은 여행사 상담 챗봇의 질문 분석기입니다. "
+            "당신은 정부 지원 사업 챗봇의 질문 분석기입니다. "
             "아래 JSON 형식으로만 답변하고, 다른 설명은 절대 출력하지 마세요.\n"
             "{{\n"
             '  "route": "rag" 또는 "general",\n'
             '  "strategy": "basic" 또는 "multi_query" 또는 "hyde" 또는 "hybrid" 또는 "none",\n'
-            '  "category": "travel_product" 또는 "hotel" 또는 "flight" 또는 '
-            '"schedule_change" 또는 "cancellation" 또는 "general"\n'
+            '  "category": "notice" ,\n '
+            '  "schedule_change" 또는 "cancellation" 또는 "general"\n'
             "}}\n\n"
             "판단 기준:\n"
-            "- 여행 상품/호텔/항공권/일정변경/취소 규정과 관련된 질문이면 route는 rag\n"
-            "- 문서와 무관한 일반 지식 질문(RAG, 임베딩, 프로그래밍 등)이면 route는 general, strategy는 none\n"
+            "- 정부 지원 사업과 관련된 질문이면 route는 rag\n"
+            "- 문서와 무관한 일반 지식 질문이면 route는 general, strategy는 none\n"
             "- 사실 하나를 정확히 찾는 질문이면 strategy는 basic\n"
             "- 표현이 다양하거나 비교가 필요한 질문이면 strategy는 multi_query\n"
             "- 질문이 짧거나 검색 키워드가 부족하면 strategy는 hyde\n"
@@ -199,9 +195,10 @@ def route_after_analyze(state: AdvancedRAGState) -> str:
     if strategy in ("multi_query", "hybrid"):
         # hybrid도 먼저 multi_query_node를 거친 뒤 hyde_node로 이어집니다.
         return "multi_query"
-    if strategy == "hyde":
+    elif strategy == "hyde":
         return "hyde"
-    return "basic_query"
+    else :
+        return "basic_query"
 
 
 def route_after_multi_query(state: AdvancedRAGState) -> str:
@@ -280,7 +277,7 @@ HYDE_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "다음 질문에 대한 답이 될 만한 가상의 여행사 안내 문서를 2~3문장으로 작성하세요. "
+            "다음 질문에 대한 답이 될 만한 가상의 정부 지원사업 상담 문서를 2~3문장으로 작성하세요. "
             "실제 안내문처럼 사실적인 어투로 작성하되, 이 내용은 검색 확장을 위한 것이며 "
             "최종 답변으로 사용하지 않습니다.",
         ),
@@ -525,7 +522,7 @@ COMPRESSION_PROMPT = ChatPromptTemplate.from_messages(
             "다음 문서에서 사용자의 질문에 답하는 데 필요한 문장만 추출하세요.\n"
             "규칙:\n"
             "1. 문서에 없는 내용을 추가하지 마세요.\n"
-            "2. 가격, 날짜, 비율, 조건은 그대로 유지하세요.\n"
+            "2. 사업명,지원내역, 지원대상, 예산, 사업 공고일을 포함하십시요.\n"
             "3. 각 문장(또는 문단) 앞에 [파일명]을 표시하세요.\n"
             "4. 질문과 관계없는 내용은 제거하세요.",
         ),
@@ -573,8 +570,9 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "제공된 참고 문서만 사용하여 답변하세요. "
-            '문서에서 확인할 수 없는 내용은 "제공된 문서에서 확인할 수 없습니다."라고 답하세요. '
+            "제공된 참고 문서만 사용하여 답변하세요. " +
+            "문서에서 확인할 수 없는 내용은 \"제공된 문서에서 확인할 수 없습니다.\"라고 답하세요." +
+            "사업명,지원내역, 지원대상, 예산, 사업 공고일은 기본적으로 포함하세요. " +
             "답변 뒤에는 사용한 파일명을 '출처:' 목록으로 표시하세요.",
         ),
         ("human", "질문: {question}\n\n참고 문서:\n{context}"),
@@ -628,6 +626,8 @@ def show_result_node(state: AdvancedRAGState) -> dict:
     print("=" * 70)
 
     return {"metrics": metrics}
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -699,12 +699,11 @@ rag_graph = build_graph()
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     test_questions = [
-        "출발 7일 전 취소 수수료는 얼마인가요?",                                   # 예상: basic
-        "부모님과 가기 좋은 오사카 상품을 추천해주세요.",                           # 예상: multi_query
-        "일정 변경이 적은 상품은?",                                              # 예상: hyde
-        "부모님과 함께 갈 오사카 상품 중 일정 변경 가능성이 적고 "
-        "이동이 무리하지 않은 상품을 추천해주세요.",                              # 예상: hybrid
-        "RAG에서 임베딩은 왜 사용하나요?",                                       # 예상: general
+        "8월에 지원할 수 있는 사업을 알려주세요",  # 예상: basic
+        "예비창업자나 스타트업이 할수 지원할 수 있는 사업을 알려주세요",  # 예상: multi_query
+        "가장 예산이 많은 사업은?",  # 예상: hyde
+        "녹색산업분야에서 고급인력이 성장 기반을 마련하기 위한 지원 사업을 추천해주세요.",  # 예상: hybrid
+        "2027년 사업 시작은 언제부터 인가요?",  # 예상: general
     ]
 
     for i, q in enumerate(test_questions, 1):
