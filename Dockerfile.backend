@@ -13,8 +13,11 @@ RUN pip install torch==2.6.0 torchvision==0.21.0 --extra-index-url https://downl
 # 나머지 의존성 패키지 설치
 RUN pip install -r requirements.txt
 
-# 나머지 코드 복사
-COPY . .
+# src 디렉터리로 이동
+WORKDIR /app/src
+
+# src의 Python 파일만 복사
+COPY src/*.py .
 
 # 컨테이너 시작 시 실행할 명령
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

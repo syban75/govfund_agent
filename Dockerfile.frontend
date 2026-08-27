@@ -8,7 +8,12 @@ RUN pip install torch==2.6.0 torchvision==0.21.0 --extra-index-url https://downl
 
 RUN pip install -r requirements.txt
 
-COPY . .
+
+# src 디렉터리로 이동
+WORKDIR /app/src
+
+# src의 Python 파일만 복사
+COPY src/streamlit_app.py .
 
 # 프론트엔드는 8501 포트 사용
 CMD ["streamlit", "run", "streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
