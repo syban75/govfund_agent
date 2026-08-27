@@ -64,10 +64,61 @@ jobs:
     environment: production
 
     steps:
+      - name: Compile 
+        shell: powershell
+        run: |
+          $sshConfig = "C:\actions-runner\.ssh\config"
+          $knownHosts = "C:\actions-runner\.ssh\known_hosts"
+
+          Write-Host "Making govfund docker images..."
+
+          ssh `
+            -F $sshConfig `
+            -o "UserKnownHostsFile=$knownHosts" `
+            -o StrictHostKeyChecking=yes `
+            -o BatchMode=yes `
+            -o ConnectTimeout=10 `
+            h200 << 'EOF 
+              
+              set -e
+              cd ~/govfund_agent/ 
+              git pull
+              docker compose build
+
+            EOF
+
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "SSH connection failed. Exit code: $LASTEXITCODE"
+          }
+
+
       - name: Deploy
         shell: powershell
         run: |
-
           $sshConfig = "C:\actions-runner\.ssh\config"
+          $knownHosts = "C:\actions-runner\.ssh\known_hosts"
 
-          Write-Host "Deploying govfund_agent..."
+          Write-Host "Deploying govfund..."
+
+          ssh `
+            -F $sshConfig `
+            -o "UserKnownHostsFile=$knownHosts" `
+            -o StrictHostKeyChecking=yes `
+            -o BatchMode=yes `
+            -o ConnectTimeout=10 `
+            h200 << 'EOF 
+              
+              set -e
+              cd ~/govfund_agent/ 
+              docker compose up -d
+              docker compose ps
+
+            EOF
+
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "SSH connection failed. Exit code: $LASTEXITCODE"
+          }
+
+

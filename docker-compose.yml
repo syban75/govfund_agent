@@ -1,0 +1,35 @@
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    image: govfund-backend:latest 
+    container_name: user14-govfund-backend
+    ports:
+      - "8014:8000"  # 외부 8001번 포트를 컨테이너 내부 8000번 포트로 연결
+    volumes:
+      - .:/app       # 개발 편의를 위한 Bind Mount 설정[cite: 1]
+    environment:
+      # 도커 컨테이너에 특정 MIG 조각만 들여보내도록 제한
+      #- NVIDIA_VISIBLE_DEVICES=MIG-09a3d497-58c7-59d7-9072-e74df0399df7
+      - NVIDIA_VISIBLE_DEVICES=MIG-ad4ae9bf-2859-5924-911a-8c2f37de3a6a
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: govfund-frontend:latest   
+    container_name: user14-govfund-frontend
+    ports:
+      - "8514:8501"  # 외부 8501번 포트를 컨테이너 내부 8501번 포트로 연결[cite: 1]
+    volumes:
+      - .:/app       # 개발 편의를 위한 Bind Mount 설정[cite: 1]
+    environment:
+      # 컨테이너 간 통신 시 DNS 이름처럼 서비스 이름(backend)을 활용[cite: 1]
+      - API_URL=http://backend:8000

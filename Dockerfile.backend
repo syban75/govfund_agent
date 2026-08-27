@@ -1,0 +1,20 @@
+# 어떤 Base Image를 사용할 것인가
+FROM python:3.10-slim
+
+# 컨테이너 내부 작업 디렉터리
+WORKDIR /app
+
+# 로컬 코드를 컨테이너에 복사
+COPY requirements.txt .
+
+# PyTorch를 명시된 cu124 버전으로 우선 설치
+RUN pip install torch==2.6.0 torchvision==0.21.0 --extra-index-url https://download.pytorch.org/whl/cu124
+
+# 나머지 의존성 패키지 설치
+RUN pip install -r requirements.txt
+
+# 나머지 코드 복사
+COPY . .
+
+# 컨테이너 시작 시 실행할 명령
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
