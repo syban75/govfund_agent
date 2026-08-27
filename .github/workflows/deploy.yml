@@ -78,15 +78,7 @@ jobs:
             -o StrictHostKeyChecking=yes `
             -o BatchMode=yes `
             -o ConnectTimeout=10 `
-            h200 << 'EOF 
-              
-              set -e
-              cd ~/govfund_agent/ 
-              git pull
-              docker compose build
-
-            EOF
-
+            h200 " set -e; cd ~/govfund_agent/ &&  git pull && docker compose build"
 
           if ($LASTEXITCODE -ne 0) {
             throw "SSH connection failed. Exit code: $LASTEXITCODE"
@@ -107,15 +99,7 @@ jobs:
             -o StrictHostKeyChecking=yes `
             -o BatchMode=yes `
             -o ConnectTimeout=10 `
-            h200 << 'EOF 
-              
-              set -e
-              cd ~/govfund_agent/ 
-              docker compose up -d
-              docker compose ps
-
-            EOF
-
+            h200 " set -e; cd ~/govfund_agent/ && docker compose up -d && docker compose ps"
 
           if ($LASTEXITCODE -ne 0) {
             throw "SSH connection failed. Exit code: $LASTEXITCODE"
