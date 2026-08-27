@@ -72,9 +72,9 @@ def _parse_data(raw: str) -> dict[str, Any]:
         return {"raw": raw}
 
 
-st.set_page_config(page_title="Advanced RAG 여행 상담 Agent", page_icon="✈️", layout="centered")
+st.set_page_config(page_title="정부 지원 사업 상담 Agent", page_icon="✈️", layout="centered")
 
-st.title("✈️ Advanced RAG 여행 상담 Agent")
+st.title("✈️ 정부 지원 사업 상담 Agent")
 st.caption("Streamlit → FastAPI(SSE) → LangGraph Advanced RAG → Chroma Vector DB")
 
 st.divider()
@@ -85,7 +85,7 @@ st.divider()
 st.subheader("질문")
 question = st.text_area(
     "질문 입력",
-    value="출발 7일 전 취소 수수료는 얼마인가요?",
+    value="예비창업자나 스타트업이 할수 지원할 수 있는 사업을 알려주세요",
     height=80,
     label_visibility="collapsed",
 )
