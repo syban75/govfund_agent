@@ -5,13 +5,13 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # 로컬 코드를 컨테이너에 복사
-COPY requirements.txt .
+COPY requirements.txt constraints.txt ./
 
 # PyTorch를 명시된 cu124 버전으로 우선 설치
-RUN pip install torch==2.6.0 torchvision==0.21.0 --extra-index-url https://download.pytorch.org/whl/cu124
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --extra-index-url https://download.pytorch.org/whl/cu124
 
 # 나머지 의존성 패키지 설치
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -c constraints.txt
 
 # src 디렉터리로 이동
 WORKDIR /app/src

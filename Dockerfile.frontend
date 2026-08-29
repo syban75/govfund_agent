@@ -2,11 +2,11 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements.txt constraints.txt .
 
-RUN pip install torch==2.6.0 torchvision==0.21.0 --extra-index-url https://download.pytorch.org/whl/cu124
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --extra-index-url https://download.pytorch.org/whl/cu124
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -c constraints.txt
 
 
 # src 디렉터리로 이동
