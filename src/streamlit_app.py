@@ -29,7 +29,8 @@ from typing import Any, Iterator
 import requests
 import streamlit as st
 
-API_BASE = "http://127.0.0.1:8014"
+import os
+API_BASE = os.getenv("API_URL", "http://backend:8014")
 STREAM_URL = f"{API_BASE}/rag/query/stream"
 
 
